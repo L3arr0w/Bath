@@ -1,2 +1,3 @@
 # Bath
-Just coursework and mecheng stuff
+First time using...
+
