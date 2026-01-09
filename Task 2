@@ -1,0 +1,75 @@
+% Investigation of beam angle constraints
+% using the resolution of 0.3cm given in datasheet
+
+% Sensor records 'w' number of distance readings at angle 'a' in an angular range 'range',
+% angle changes at a resolution 'res'. 
+
+% columns in data array referred to by 'n'
+
+% data collected in 'data' array. 1st row = angle. 2nd row is angles/180. 'w' rows after = distance readings. last row is processed data
+% readings then processed to find the angle at which readings no longer
+% have a 0.3cm resolution/the sensor returns 'inf' or invalid angle values --> all valid angles are stored in the 'crit' array
+% the 'big loop' calculates the mean of multiple angle constraints by repeating the whole code
+
+clc, clearvars, close all
+ 
+ b = arduino ('COM3', 'Uno','Libraries', {'Servo', 'Ultrasonic'}); 
+ u = ultrasonic(b, 'D5','D6');
+ s = servo(b, 'D3');
+% parameters
+w = 15              %num. of readings per angle
+res = 0.5           %servo angular resolution
+range = [-17,17]    %distance range    
+threshold = 0.3/100 %the critical std. limit
+loops = 5           %number of times code is run
+% graph
+figure
+plot(range(1,1):1:range(1,2), threshold*ones(numel([range(1,1):1:range(1,2)])),'LineStyle','--','Color',[110,0,250]/250,'LineWidth',1), hold on
+xlim([range(1,1),range(1,2)])
+% big loop
+m = 1
+while m <= loops
+    % configuring 'data'
+    distval = [range(1,1):res:range(1,2)]
+    data = zeros(w+3, size(distval,2))
+    data(1,:) = distval
+    data(2,:) = (distval +90)/180
+    % collecting data
+    n = 1
+    while n<=size(data,2)
+        writePosition(s,data(2,n))
+        pause(0.2)
+        for i = 3:w+2
+            data(i,n) = readDistance(u)
+            pause(0.1)
+        end
+        n = n+1
+    end
+    %processing data
+    n = 1
+    crit = zeros(1,size(data,2))
+    while n<= size(data,2)
+        vals = data(3:w+2,n)
+        vals = vals(~isinf(vals))
+        data(w+3,n) = std(vals);
+        if std(vals) < threshold && numel(vals) > 0.6*w
+            crit(1,n) = data(1,n)
+        else
+            crit(1,n) = 0
+        end
+        n = n+1;
+    end
+    % simple visual representation of data (x-axis = angle, y-axis = std)
+    plot(data(1,:),data(w+3,:)), ylim([0,threshold*1.2])
+    % finding limits for resolution
+    lowerLim = min(crit)
+    upperLim = max(crit)
+    angularLim(1,m) = (-lowerLim+upperLim)/2 % the mean of both upper and lower means that the sensor doesn't have to be totally square to target
+    m = m+1
+end
+    xlabel('Angle /degrees')
+    ylabel('Standard Deviation/m')
+    title('Visualisation of data')
+    legend('Datasheet sensor resolution')
+    angularLim
+    meanAngularLim =  sum(angularLim)/size(angularLim,2)
