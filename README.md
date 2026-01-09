@@ -1,3 +1,3 @@
-# Bath
+# 12004 Report
 First time using Git...
 Please copy and paste the 'All Code Together' file and run each section individually for its respective task. The report references lines in this script only.
