@@ -1,0 +1,18 @@
+clc, clearvars, close all
+
+b = arduino ('COM3', 'Uno','Libraries', {'Servo','Ultrasonic'}); 
+u = ultrasonic(b, 'D5','D6');
+% creating a simple matrix of measurement distance and time
+
+%parameter config
+time = 10
+%measuring time
+tic
+n = 1 
+while toc<time;
+    data(1,n) = readDistance(u)
+    data(2,n) = toc;
+    n = n+1;
+    pause(0.1) 
+end 
+data
