@@ -1,0 +1,39 @@
+% make an LED flash at increasing off-time rate the closer it is to an object
+clc
+clearvars
+close all
+b= arduino ('COM3', 'Uno','Libraries', {'Servo', 'Ultrasonic'}); %board configuration
+u = ultrasonic(b, 'D5','D6');
+%param config
+minDist = 1.4 %metres
+maxDist = 1.8
+time = 100 %time active
+wind = 1   %how many measurements per blink
+on = 0.06  %time led is on
+minOff = 0 %min time led is off
+maxOff = 1.5 %max time led is off
+%loop
+actTime = 0 %time var
+off = 0
+while actTime < time
+    tic;
+    for n = 1:wind
+        dist(1,n) = readDistance(u)
+    end
+    noInfDist = dist(~isinf(dist));
+    meanDist = mean(noInfDist);
+    writeDigitalPin(b,'D2',0);
+    if meanDist > minDist && meanDist < maxDist
+        toc;
+        off = ((meanDist-minDist)*(maxOff-minOff))/(maxDist-minDist)+minOff;
+        info = [meanDist,off]
+        pause(off);
+    else
+        pause(off)
+    end
+    writeDigitalPin(b,'D2',1)
+    pause(on)
+    actTime = actTime + toc;
+end
+
+writeDigitalPin(b,'D2',0) 
