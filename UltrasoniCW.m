@@ -207,7 +207,7 @@ end
 
 %% TASK 3
 
-% make an LED flash at increasing rate the closer it is to an object
+% make an LED flash at increasing off-time rate the closer it is to an object
 clc
 clearvars
 close all
@@ -244,4 +244,5 @@ while actTime < time
     pause(on)
     actTime = actTime + toc;
 end
+
 writeDigitalPin(b,'D2',0) 
