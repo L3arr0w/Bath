@@ -1,0 +1,7 @@
+% TASK 1
+
+%% 1.1- Simple connection with arduino board
+clc, clearvars, close all
+
+b = arduino ('COM3', 'Uno','Libraries', {'Servo','Ultrasonic'})
+u = ultrasonic(b, 'D5','D6')
