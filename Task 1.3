@@ -1,0 +1,28 @@
+clc, clearvars, close all
+
+b = arduino ('COM3', 'Uno','Libraries', {'Servo','Ultrasonic'}); 
+u = ultrasonic(b, 'D5','D6');
+% parameter config
+t = 10
+%measuring distance
+tic
+n=1
+while toc<t
+    distance(1,n) = readDistance(u)
+    time(1,n) = toc;
+    n = n+1;
+    pause(0.1)
+end
+%filtering out infinite distance readings
+noInfDistance = distance(~isinf(distance))
+time2 = time(~isinf(distance))
+%using a moving average technique with window size 5
+meanDistance = movmean(noInfDistance, 5)
+% visual representation of the data
+plot(time2,noInfDistance,'*'), hold on
+plot(time2,meanDistance)
+ylim([0,4])
+legend('Distance with inf values removed', ['Distance with moving average ' ...
+    'applied and inf values removed'], 'location', 'best')
+xlabel('time (s)')
+ylabel('Distance (m)')
