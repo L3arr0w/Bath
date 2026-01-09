@@ -1,0 +1,66 @@
+% creating a matrix 'data' which contains the actual distance in the 1st row, each with 'w' readings from the sensor below them.
+
+% data created with an input/output, program gives distance to place sensor at, and you enter a value to automate the sensor's reading
+% other values can be inputed to repeat previous readings, break the loop, or continue to the next column/distance
+
+% data then processed to find the calibration relationship
+clc, clearvars except 'meanDiff', close all
+%board config
+b = arduino ('COM3', 'Uno','Libraries', {'Servo','Ultrasonic'}); 
+u = ultrasonic(b, 'D5','D6');
+%config of parameters
+wind = 10
+startval = 25
+endval = 80 % in cm
+spacing = 5
+%creation of data array
+distval = [startval: spacing: endval]
+data = zeros(wind+1, size(distval,2));
+data(1,:) = distval;
+% filling of data
+n = 1
+while true
+    X = ['Distance to wall = ', num2str(data(1,n)), 'cm. Press 1 to confirm,' ...
+        ' 2 to repeat, 3 to skip ahead, or 9 to process results.'];
+    conf = input(X); %to confirm that sensor is at right distance and/or to repeat the measuring of some data
+    if conf == 1
+        for w = 1:wind
+            data(w+1,n) = readDistance(u)*100               %to use when calibrating
+            %data(w+1,n) = (readDistance(u)+meanDiff)*100   %to use when calibrated
+            pause(0.1)
+        end
+        n = n+1
+    elseif conf == 3 
+        n = n+1;
+    elseif conf == 2
+        n = n-1;
+    elseif conf == 9
+        break
+    else 
+        n = n-1;
+    end
+    if n > size(data,2)
+       n = size(data,2)
+    end
+end
+% find mean of all data collected (whilst excluding all inf values)
+n = 1;
+while n<= size(data,2)
+    meandata(1,n) = data(1,n);
+    vals = data(2:wind+1,n);
+    vals = vals(~isinf(vals));
+    meandata(2,n) = mean(vals);
+    n = n+1;
+end
+%visual representation of data
+x = [1:size(meandata,2)];
+meandata
+plot(x,meandata(1,:)), hold on
+plot(x,meandata(2,:))
+legend('Real Distance', 'Distance measuured with ultrasonic', 'location', 'best')
+xlabel('Arbitrary values')
+ylabel('Distance (cm)')
+%use this to find relationship between real and read distances --> linear
+%finding the mean difference between real and measured values
+meanDiff = sum(meandata(2,:)-meandata(1,:))/size(meandata,2)
+% WORKS !!!
